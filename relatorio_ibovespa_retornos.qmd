@@ -1,0 +1,106 @@
+---
+title: "Análise dos Retornos Diários do IBOVESPA"
+author: "Victor Comitti"
+date: "`r Sys.Date()`"
+format: html
+self-contained: true
+---
+
+```{r, message=FALSE, warning=FALSE}
+# Carregar pacotes necessários
+library(ggplot2)
+library(dplyr)
+library(gt)
+library(tidyverse)
+library(scales)
+library(moments)
+library(quantmod)
+library(plotly)
+
+# Importar dados do IBOVESPA
+getSymbols("^BVSP", src = "yahoo", from = "2017-01-01", to = Sys.Date())
+ibovespa_data <- as.data.frame(BVSP) %>%
+  mutate(data = index(BVSP)) %>%
+  select(data, BVSP.Close) %>%
+  mutate(retorno = (BVSP.Close / lag(BVSP.Close) - 1) * 100) %>%
+    na.omit() 
+
+head(ibovespa_data)
+
+```
+
+```{r, message=FALSE, warning=FALSE}
+ggplot(ibovespa_data, aes(x = data, y = retorno)) +
+  geom_line() +
+  labs(title = "Retornos Diários do IBOVESPA", x = "Data", y = "Retorno (%)") +
+  theme_minimal() 
+```
+O conjunto de dados é composto pelos retornos do Ibovespa entre 03/01/2017 e 09/08/2024. A série temporal mostra um grande cluster de volatilidade no primeiro trimestre de 2020, o que sugere que o conjunto de dados contém outliers. Além disso, retornos em geral são assimétricos. Para verificar essas hipóteses, inicialmente vamos visualizar a distribuição empírica dos dados e calcular as estatísticas descritivas. 
+```{r, message=FALSE, warning=FALSE}
+ggplot(ibovespa_data, aes(x = retorno)) +
+  geom_histogram(binwidth = 0.3, fill = "blue", color = "black") +
+  labs(title = "Histograma dos Retornos Diários", x = "Retorno (%)", y = "Frequência") +
+  theme_minimal()
+
+```
+Podemos observar que a maior parte dos retornos se encontra próximo de zero, mas com uma cauda mais longa para os retornos negativos, indicando assimetria negativa.
+```{r, message=FALSE, warning=FALSE}
+
+# Calcular as estatísticas e arredondar para duas casas decimais
+estatisticas <- ibovespa_data %>%
+  summarise(
+    media = round(mean(retorno, na.rm = TRUE), 2),
+    mediana = round(median(retorno, na.rm = TRUE), 2),
+    máximo = round(max(retorno, na.rm = TRUE), 2),
+    mínimo = round(min(retorno, na.rm = TRUE), 2),
+    Q1 = round(quantile(retorno, 0.25, na.rm = TRUE), 2),
+    Q3 = round(quantile(retorno, 0.75, na.rm = TRUE), 2),
+    variancia = round(var(retorno, na.rm = TRUE), 2),
+    desvio_padrao = round(sd(retorno, na.rm = TRUE), 2),
+    assimetria = round(skewness(retorno, na.rm = TRUE), 2)
+  )
+
+# Transformar em data frame e adicionar nomes de linhas
+estatisticas_df <- data.frame(
+  Estatística = c("Média", "Mediana", "Máximo", "Mínimo", "Q1", "Q3", "Variância", "Desvio Padrão", "Assimetria"),
+  Valor = as.vector(t(estatisticas))
+)
+
+# Criar objeto gt
+estatisticas_gt <- estatisticas_df %>%
+  gt()
+
+# Exibir a tabela gt
+estatisticas_gt
+```
+A distribuição dos retornos apresenta uma assimetria negativa (-0,96), o que indica que a mediana (0,07%) é maior que a média (0,05%). Isso significa que, em 50% dos dias, o IBOVESPA teve um retorno de 0,07% ou mais. A assimetria negativa, por sua vez, puxa a média para baixo, refletindo uma maior frequência de retornos negativos mais extremos.
+
+O desvio padrão dos retornos é de 1,52%, e, aplicando a desigualdade de Chebyshev, podemos afirmar que no mínimo 75% dos retornos estão a uma distância de até dois desvios padrão em relação à média. Para os dados analisados, isso se traduz em **pelo menos** 75% dos retornos situados dentro do intervalo [0.05−2×1.52,0.05+2×1.52]=[-3.99%, 4.09%].
+
+Para identificar possíveis outliers vamos, inicialmente, traçar um boxplot (mais sobre isso adiante).
+
+```{r, message=FALSE, warning=FALSE}
+# Boxplot
+ggplot(ibovespa_data, aes(y = retorno)) +
+  geom_boxplot(fill = "lightblue", color = "black") +
+  labs(title = "Boxplot dos Retornos Diários", y = "Retorno (%)") +
+  theme_minimal()
+```
+
+A figura mostra claramente a existência de vários outliers. Para identificá-los vamos usar a regra da distância interquartil.
+
+```{r}
+
+# 5. Identificação de Observações Discrepantes Usando IQR
+Q1 <- quantile(ibovespa_data$retorno, 0.25, na.rm = TRUE)
+Q3 <- quantile(ibovespa_data$retorno, 0.75, na.rm = TRUE)
+IQR <- Q3 - Q1
+
+outliers <- ibovespa_data %>%
+  filter(retorno < (Q1 - 1.5 * IQR) | retorno > (Q3 + 1.5 * IQR))
+
+print(outliers)
+
+```
+
+Pelo método do 1.5*IQR esse conjunto de dados possui 53 outliers. Nenhuma dessas observações deriva de um erro de medida ou da anotação incorreta de dados. Qualquer modelagem adicional desse conjunto de dados deve levar em consideração a presença de observações discrepantes.
