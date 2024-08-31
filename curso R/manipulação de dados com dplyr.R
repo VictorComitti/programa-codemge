@@ -38,3 +38,57 @@ dados %>%
 
 dados %>% 
   distinct(youngkids, oldkids)
+
+# Combinando mais de uma operação em único pipeline ----------------------------
+
+dados %>% 
+  filter(income < 10000) %>%
+  arrange(age)
+
+## Codigo equivalente sem usar dplyr e %>% 
+
+dados_ordenados <- dados[order(dados$age), ][dados$income < 10000, ]
+
+#  mutate ----------------------------------------------------------------------
+
+dados %>% 
+  mutate(total_kids = youngkids + oldkids)
+
+# se quisermos especificar a posição da nova coluna podemos usar .before ou. after
+
+dados %>% 
+  mutate(total_kids = youngkids + oldkids,
+         .before = foreign)
+
+# select -----------------------------------------------------------------------
+
+dados %>% 
+  select(participation, income, age)
+
+## se quisermos apenas variáveis numéricas -------------------------------------
+
+dados %>% 
+    select(where(is.numeric))
+
+## se quisermos apenas as variáveis que contém a palavra kids ------------------
+
+dados %>% 
+  select(contains("kids"))
+
+# rename -----------------------------------------------------------------------
+
+dados %>% 
+  rename(criancasjovens = youngkids)
+
+# relocate ---------------------------------------------------------------------
+
+dados %>% 
+  relocate(income, age)
+
+dados %>%
+  relocate(age, 
+           .before = income)
+
+# group_by ---------------------------------------------------------------------
+
+
