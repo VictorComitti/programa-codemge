@@ -91,4 +91,48 @@ dados %>%
 
 # group_by ---------------------------------------------------------------------
 
+dados %>% 
+  group_by(participation)
 
+## Note que não houve nenhuma alteração no dataset. Todas as operações subsequentes
+## serão realizadas sobre os dois grupos criados. 
+
+dados %>% 
+  group_by(participation) %>% 
+  summarise(mean_income = mean(income),
+            n = n())
+
+## Neste caso, observamos que a renda média dos indivíduos que participam do mer-
+## cado de trabalho é 10,6 e dos que não participam, 10,8.
+
+# Agrupamento por múltiplas colunas --------------------------------------------
+
+dados %>% 
+  group_by(participation, foreign) %>% 
+  summarise(mean_income = mean(income),
+            n = n())
+
+# ungroup ----------------------------------------------------------------------
+
+dados %>% 
+  group_by(participation) %>% 
+  ungroup() %>% 
+  summarise(mean_income = mean(income),
+            n = n())
+
+# .by --------------------------------------------------------------------------
+
+dados %>% 
+  summarise(mean_income = mean(income),
+            n = n(),
+            .by = participation)
+
+# slice ------------------------------------------------------------------------
+
+dados %>% 
+  group_by(participation) %>% 
+  slice(1)
+
+dados %>% 
+  group_by(participation) %>% 
+  slice_head(n = 5)
