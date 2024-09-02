@@ -14,7 +14,7 @@ resultado4 <- 10 / 2  # 5
 resultado5 <- 2^3  # 8
 
 # Módulo
-resultado6 <- 10 %% 3  # 1
+resultado6 <- 11 %% 3  # 1
 
 # Divisão Inteira
-resultado7 <- 10 %/% 3  # 3
+resultado7 <- 13 %/% 3  # 3

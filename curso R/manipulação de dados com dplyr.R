@@ -131,8 +131,8 @@ dados %>%
 
 dados %>% 
   group_by(participation) %>% 
-  slice(1)
+  slice(1) # seleciona a primeira linha de cada grupo
 
 dados %>% 
   group_by(participation) %>% 
-  slice_head(n = 5)
+  slice_head(n = 5) # seleciona as cinco primeiras linhas de cada grupo

@@ -20,5 +20,3 @@ rownames(ganhos_semanais) <- c("segunda-feira", "terça-feira", "quarta-feira",
 ganhos_semanais <- cbind(ganhos_semanais, rowSums(ganhos_semanais))
 ganhos_semanais <- rbind(ganhos_semanais, colSums(ganhos_semanais))
 
-
-                         
