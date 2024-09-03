@@ -1,13 +1,25 @@
 x <- 10
+
 nome <- "Codemge"
 
 y = 5
 linguagem = "R"
 
 20 -> z
+
 "Dados" -> tipo
 
+minha-primeira-variavel <- 60
 
+a <- 25
+
+b <- 13
+
+soma <- a + b
+
+soma
+
+a
 # Atribuindo um número a uma variável
 a <- 42
 

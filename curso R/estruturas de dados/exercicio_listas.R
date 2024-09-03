@@ -1,3 +1,5 @@
+# Semana 1 ---------------------------------------------------------------------
+
 Dia <- c("segunda_feira", "terça-feira", "quarta-feira", 
          "quinta-feira", "sexta-feira")
 

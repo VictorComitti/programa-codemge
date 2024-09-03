@@ -6,7 +6,11 @@ c <- 10L    # Inteiro (integer)
 
 # Dados categóricos
 
-cor <- factor(c("vermelho", "azul", "verde"))
+cores <- factor(c("vermelho", "azul", "verde"))
+
+verde <- "cor verde"
+
+novas_cores <- factor(c("vermelho", "azul", verde))
 
 #Carateres
 
