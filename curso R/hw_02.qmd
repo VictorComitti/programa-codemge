@@ -1,0 +1,19 @@
+---
+title: "Para casa 2 - Manipulação de dados usando o pacote dplyr"
+format: html
+editor: visual
+---
+
+-   Carregue a base de dados "hw_02.xlsx"
+
+-   Agrupe os dados por ID venda e calcule o valor total recebido por contrato.
+
+-   Repita o passo anterior, porém inclua apenas os contratos da categoria "alto padrão".
+
+- Crie uma nova tabela com as seguintes especificações: 
+  - Cada linha representa um id_venda. 
+  - A primeira coluna é o id_venda; a segunda é o valor de venda do imóvel e a terceira é o número de parcelas do contrato. 
+  - Crie uma nova coluna indicando o número de parcelas já quitadas. 
+  - Salve a tabela como um arquivo .xlsx
+  - **Dica:** como o valor de venda se repete para todas as parcelas, você pode agrupar o conjunto de dados por id_venda e usar a função first(). 
+

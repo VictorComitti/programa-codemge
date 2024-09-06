@@ -1,0 +1,11 @@
+---
+title: "Para casa 1 - cálculo de VPL"
+format: html
+editor: visual
+---
+
+-   Carregue a base de dados "hw_01.xlsx"
+
+-   Calcule o VPL do investimento considerando um investimento inicial de 80000 e uma taxa de desconto de 10%.
+
+-   Agora refaça o cálculo usando a função npv do pacote 'jrvfinance'.

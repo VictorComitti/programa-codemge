@@ -1,5 +1,6 @@
 library(AER)
 library(tidyverse)
+library(openxlsx)
 
 data("SwissLabor")
 
@@ -136,3 +137,33 @@ dados %>%
 dados %>% 
   group_by(participation) %>% 
   slice_head(n = 5) # seleciona as cinco primeiras linhas de cada grupo
+
+# join -------------------------------------------------------------------------
+
+df1 <- data.frame(ID = c(1, 2, 3, 4),
+                  Nome = c("Ana", "Bruno", "Carlos", "Daniel"))
+
+df2 <- data.frame(ID = c(3, 4, 5, 6),
+                  Cidade = c("São Paulo", "Rio de Janeiro", "Curitiba", "Salvador"))
+
+resultado_inner <- inner_join(df1, df2, by = "ID")
+
+resultado_left <- left_join(df1, df2, by = "ID")
+
+resultado_right <- right_join(df1, df2, by = "ID")
+
+resultado_full <- full_join(df1, df2, by = "ID")
+
+
+# Exibindo os resultados
+resultado_inner
+resultado_left
+resultado_right
+resultado_full
+
+novo_swiss_labor <- dados %>% 
+  mutate(total_kids = youngkids + oldkids)
+
+write.xlsx(novo_swiss_labor, file = "novo_swiss_labor.xlsx")
+
+write.csv(novo_swiss_labor, file = "novo_swiss_labor.csv")

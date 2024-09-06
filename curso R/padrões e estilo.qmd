@@ -1,0 +1,113 @@
+---
+title: "Padrões de codificação"
+format: html
+editor: visual
+---
+
+## Organização do código 
+
+- Insira todas as libraries e variáveis "hard-coded" no início do código.
+
+- Use projetos do RStudio para organizar seus scripts.
+
+- Modularize seu código
+
+
+
+
+## O código
+
+- Insira comentários para documentar o que foi feito
+
+- Se mais de uma pessoa vai trabalhar no código, não utilize funções que alteram o computador de outro usuário. **Exemplos:** 'setwd()', 'install.packages()'.
+
+- Escolha um estilo e seja consistente
+
+## Estilo de programação 
+
+### Nomes de arquivos 
+
+- Letras minúsculas
+
+- Evite espaços 
+
+- separar grupos de nomes por - e dentro do grupo separar as palavras por _ . **Exemplo**: empresa_AAAAMM-<nome significativo do arquivo com palavras separas por _>
+
+### Nomes de objetos
+
+- O R é case sensitive. Prefira letras minúsculas. 
+
+- Prefira nomes longos porém explicativos. Isso pode economizar tempo caso você precise revisitar o código depois de muito tempo. 
+
+### Espaços
+
+- Coloque espaços antes e depois de operadores matemáticos com exceção do ^. 
+
+```{r, eval = FALSE}
+# Bom 
+x <- (a + b)^2 / 2
+
+# Ruim
+
+x<-( a+b )^2
+
+```
+
+- Sempre insira espaço após uma vírgula. 
+
+```{r, eval = FALSE}
+# Bom 
+mean(x, na.rm = TRUE)
+X[, 1]
+
+# Ruim
+
+mean(x,na.rm = TRUE)
+X[ ,1]
+```
+
+- Inserir uma quebra de linha após cada argumento de uma função facilita a leitura do código. 
+
+```{r, eval = FALSE}
+glm(formula = y ~ x, 
+    data = dados,
+    family = "gaussian")
+```
+
+## Pipes
+
+- Sempre insira um espaço antes do pipe
+
+- O pipe deve ser o último objeto em uma linha
+
+```{r, eval = FALSE}
+# Bom
+
+dados %>% 
+  group_by(participation) %>% 
+  ungroup() %>% 
+  summarise(mean_income = mean(income),
+            n = n())
+
+# Ruim
+
+dados %>% group_by(participation) %>% ungroup() %>% summarise(mean_income = mean(income),
+            n = n())
+```
+
+- Depois da primeira linha, as linhas subsequentes devem ser identadas com dois espaços.
+
+## Aspectos gerais
+
+- Para fazer a atribuição de variáveis priorize o operador '<-' em relação ao '='. 
+
+- Para textos prefira "" em relação a ''.
+
+- Na medida do possível, cada linha deve ter no máximo 80 caracteres. A linha vertical no editor de script deve servir como referência.
+
+- Em códigos longos, separe diferentes seções usando comentários. 
+
+
+```{r, eval = FALSE}
+# Nome da seçao --------------------------------------------------------
+```
