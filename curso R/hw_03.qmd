@@ -1,0 +1,6 @@
+---
+title: "hw_03"
+format: html
+editor: visual
+---
+Faça a análise exploratória do banco de dados 'iris'. 

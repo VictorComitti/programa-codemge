@@ -1,4 +1,5 @@
 library(jrvFinance)
+library(openxlsx)
 
 fluxo_caixa <- read.xlsx("hw_01.xlsx")
 
@@ -13,4 +14,10 @@ VPL
 # Alternativamente 
 
 VPL <- npv(rate = taxa_desconto, cf = fluxo_caixa$Fluxo.de.Caixa)
+
+npv(fluxo_caixa$Fluxo.de.Caixa, taxa_desconto)
+
+
 VPL
+
+?npv
