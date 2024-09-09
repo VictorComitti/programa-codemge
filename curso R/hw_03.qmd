@@ -3,4 +3,6 @@ title: "hw_03"
 format: html
 editor: visual
 ---
-Faça a análise exploratória do banco de dados 'iris'. 
+- Use o banco de dados ‘íris’ disponível no R e faça uma Análise exploratória usando as ferramentas demonstradas em sala de aula. 
+
+- Gere dados faltantes aleatoriamente na variável ‘Sepal.length’. Agora use as técnicas de imputação mostradas para preencher esses dados faltantes. Compare os valores obtidos com os valores reais. 

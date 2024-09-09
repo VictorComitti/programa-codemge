@@ -1,3 +1,5 @@
+rm(list =)
+
 library(tidyverse)
 library(openxlsx)
 
