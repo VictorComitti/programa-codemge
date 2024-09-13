@@ -7,12 +7,13 @@ library(corrplot)
 library(Hmisc)
 library(mice)
 library(missForest)
+
 # Vamos usar o conjunto de dados Chile novamente -------------------------------
 data(Chile)
 
 # As variáveis 'age', 'income', 'statusquo', 'vote' e 'education' possuem
 # valores faltantes. Vamos examinar primeiro as variáveis numéricas.
-
+?impute
 
 Chile_imputed_income_media <- impute(Chile$income, mean)
 
@@ -54,7 +55,10 @@ complete(imputed_data_nhanes)
 
 md.pattern(Chile)
 
-imputed_Data <- mice(Chile, m = 5, maxit = 50,  seed = 500)
+imputed_Data <- mice(Chile,
+                     m = 5,
+                     maxit = 5, 
+                     seed = 500)
 
 completeData <- complete(imputed_Data)
 

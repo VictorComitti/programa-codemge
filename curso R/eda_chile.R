@@ -5,7 +5,6 @@ library(ggplot2)
 library(gridExtra)
 library(corrplot)
 
-
 # Vamos usar o conjunto de dados Chile que já faz parte da library 'car'--------
 
 # A função str mostra a estrutura básica dos dados -----------------------------
@@ -22,7 +21,6 @@ skim(Chile)
 # descritivo das variáveis que inclui a contagem de valores únicos, os quantis
 # da distribuição das variáveis numéricas e o número de observações faltantes
 # em cada variável.
-
 
 chile_skim <-
   skim(Chile)

@@ -1,4 +1,4 @@
-rm(list =)
+rm(list = ls())
 
 library(tidyverse)
 library(openxlsx)
@@ -11,7 +11,7 @@ valores_recebidos <- dados %>%
   mutate(valor_recebido = ifelse(is.na(valor_recebido),
                                        0, valor_recebido))
 
-valores_recebidos <- dados %>%
+valores_recebidos_alto_padrao <- dados %>%
   filter(categoria_produto == "Alto Padrão") %>%
   group_by(id_venda) %>%
   summarise(valor_recebido = sum(valor_recebido, na.rm = TRUE)) 
@@ -22,3 +22,7 @@ dados %>%
             parcelas = n(), 
             parcelas_quitadas = sum(valor_recebido > 0, na.rm = TRUE)) %>% 
   View
+
+x <- "codemge"
+y <- 'codemge'
+
