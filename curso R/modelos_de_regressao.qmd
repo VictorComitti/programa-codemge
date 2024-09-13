@@ -1,0 +1,518 @@
+---
+title: "Modelagem em R"
+format: html
+editor: visual
+author: Victor Schmidt Comitti
+self-contained: true
+toc: true
+---
+
+# Regressão Linear
+
+A regressão linear é um dos modelos estatísticos mais simples e amplamente utilizados em **Data Science** para entender a relação entre variáveis. Neste capítulo, abordaremos os conceitos fundamentais da regressão linear, com foco em exemplos práticos usando a linguagem **R**.
+
+## Conceitos Básicos
+
+### Definição
+
+A regressão linear simples é usada para modelar a relação entre duas variáveis quantitativas: - **Variável dependente** (ou resposta): O que estamos tentando prever (Y). - **Variável independente** (ou explicativa): O que usamos para prever (X).
+
+O modelo é representado pela equação:
+
+```{=tex}
+\begin{equation}
+Y = \beta_0 + \beta_1X + \epsilon
+\end{equation}
+```
+Onde:
+
+-   $\beta_0$ é o intercepto;
+-   $\beta_1$ é o coeficiente angular (inclinação);
+-   $\epsilon \sim N(0, \sigma^{2})$ é o termo de erro.
+
+### Objetivo
+
+O objetivo da regressão linear é estimar os parâmetros $\beta_0$ e $\beta_1$ de forma que a soma dos quadrados dos resíduos (SSR)  seja minimizada, ou seja, encontrar a reta que melhor se ajusta aos dados.
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+library(ggplot2)
+library(gganimate)
+library(dplyr)
+library(tidyr)
+library(patchwork)
+library(car)
+library(tidyverse)
+library(tseries)
+library(broom)
+library(MASS)
+library(ggpubr)
+
+# Gerando dados fictícios com menos pontos
+set.seed(123)
+n <- 15  # Reduzi o número de pontos
+X <- rnorm(n, mean = 5, sd = 2)
+Y <- 2 * X + rnorm(n)
+
+dados <- data.frame(X, Y)
+
+# Ajustando o modelo de regressão
+modelo <- lm(Y ~ X, data = dados)
+
+# Coeficientes da reta de mínimos quadrados
+intercepto_final <- coef(modelo)[1]
+coef_final <- coef(modelo)[2]
+
+# Ponto de rotação: centro dos dados
+X_centro <- mean(X)
+Y_centro <- mean(Y)
+
+# Inclinações intermediárias para simular a rotação
+slopes <- seq(0, coef_final, length.out = 20)
+intercepts <- seq(Y_centro, intercepto_final, length.out = 20)  # Variando o intercepto
+
+# Calculando o SSR para cada passo
+SSR_list <- sapply(1:length(slopes), function(i) {
+  intercept_atual <- intercepts[i]
+  slope_atual <- slopes[i]
+
+  # Previsão dos valores de Y para cada reta
+  Y_pred <- intercept_atual + slope_atual * X
+
+  # Somatório dos quadrados dos resíduos
+  SSR <- sum((Y - Y_pred)^2)
+
+  return(SSR)
+})
+
+# Criando os gráficos com diferentes interceptos e inclinações
+graficos_df <- bind_rows(lapply(1:length(slopes), function(i) {
+  intercept_atual <- intercepts[i]
+  slope_atual <- slopes[i]
+
+  # Previsão dos valores de Y para cada reta
+  Y_pred <- intercept_atual + slope_atual * X
+
+  # Criando um dataframe para armazenar os pontos, interceptos, inclinações e SSR
+  data.frame(X, Y, Y_pred,
+             intercept = intercept_atual,
+             slope = slope_atual,
+             SSR = SSR_list[i],
+             iter = i)
+}))
+
+# Plot da animação do gráfico de dispersão com resíduos e reta ajustada
+p1 <- ggplot(graficos_df, aes(x = X, y = Y)) +
+  geom_point(size = 4) +  # Aumentando o tamanho dos pontos
+  geom_abline(aes(intercept = intercept, slope = slope), color = "blue") +
+  geom_segment(aes(xend = X, yend = Y_pred), linetype = "dashed", color = "red") +
+  labs(title = "Reta de Regressão") +
+  transition_manual(iter) +
+  ease_aes('linear')
+
+# Plot do somatório dos quadrados dos resíduos (SSR) ao longo das iterações
+p2 <- ggplot(graficos_df, aes(x = iter, y = SSR)) +
+  geom_line() +
+  geom_point(size = 4) +
+  labs(title = "Somatório dos Quadrados dos Resíduos (SSR)",
+       x = "Iteração", y = "SSR") +
+  transition_manual(iter) +
+  ease_aes('linear')
+
+# Criando e salvando as animações separadamente
+anim1 <- animate(p1, nframes = length(slopes), fps = 2)
+anim2 <- animate(p2, nframes = length(slopes), fps = 2)
+
+```
+
+<div style="display: flex;">
+
+  <div style="flex: 50%; padding-right: 10px;">
+
+```{r, echo = FALSE}
+  anim1
+```
+
+</div> <div style="flex: 50%; padding-left: 10px;">
+
+```{r, echo = FALSE}
+anim2
+```
+</div> </div>
+
+### Premissas do Modelo de Regressão Linear
+
+### 1. Linearidade
+
+A relação entre a variável dependente  $Y$ e as variáveis independentes $X$ deve ser linear. Isso significa que os parâmetros do modelo (intercepto e coeficientes) devem descrever uma relação linear entre $X$ e $Y$.
+
+
+### 2. Independência dos Erros
+
+Os erros devem ser independentes entre si. Isso significa que o erro de uma observação não deve influenciar o erro de outra observação. Uma violação dessa premissa pode resultar em autocorrelação, que é comum em dados com dependência temporal. 
+
+### 3. Homocedasticidade
+
+Os resíduos devem ter variância constante ao longo de todos os níveis da variável explicativa $X$. Se a variância dos resíduos aumentar ou diminuir sistematicamente à medida que os valores de $X$ mudam, dizemos que há heterocedasticidade. A heterocedasticidade afeta a estimação da variância o que leva a problemas nos cálculos de testes de hipótese e intervalos de confiança.  
+
+```{r, echo = TRUE}
+# Carregando o pacote ggplot2
+library(ggplot2)
+
+# Gerando dados heterocedásticos
+set.seed(123)
+n <- 100
+x <- seq(1, 10, length.out = n)
+y <- 2 * x + rnorm(n, mean = 0, sd = x)
+
+# Criando um data frame com os dados
+data <- data.frame(x = x, y = y)
+
+# Criando o gráfico com ggplot2
+ggplot(data, aes(x = x, y = y)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  labs(title = "Exemplo de Dados Heterocedásticos",
+       x = "Variável Independente (x)",
+       y = "Variável Dependente (y)") +
+  theme_minimal()
+
+```
+
+### 4. Normalidade dos erros
+
+Os resíduos devem seguir uma distribuição normal com média zero e variância constante. Isso é necessário para garantir a validade dos testes de hipóteses e intervalos de confiança. A normalidade dos erros pode ser verificada por meio de gráficos de probabilidade normal (Q-Q plot) ou testes estatísticos, como o Shapiro-Wilk ou o Jarque Bera.
+
+### 5. Ausência de Multicolinearidade
+
+Em modelos de regressão múltipla, as variáveis independentes não devem estar altamente correlacionadas entre si. Se houver uma forte correlação entre duas ou mais variáveis explicativas, pode ocorrer multicolinearidade, o que dificulta a interpretação dos coeficientes individuais.
+
+Uma maneira comum de diagnosticar multicolinearidade é calcular o Fator de Inflação da Variância (VIF) para as variáveis explicativas. Valores de VIF superiores a 10 sugerem multicolinearidade problemática.
+
+## Exemplo Prático em R
+
+Vamos usar o dataset `mtcars` para ilustrar a regressão linear simples. Neste exemplo, queremos prever o consumo de combustível (mpg) com base no peso do carro (wt).
+
+```{r, echo = TRUE}
+
+library(tidyverse)
+# Carregar os dados
+data(mtcars)
+
+# Visualização inicial dos dados
+ggplot(mtcars, aes(x = wt, y = mpg)) +
+  geom_point() +
+  labs(title = "Relação entre Peso e Consumo de Combustível",
+       x = "Peso do Carro (1000 lbs)",
+       y = "Consumo (mpg)") +
+  theme_minimal()
+
+# Ajustar o modelo de regressão linear
+modelo <- lm(mpg ~ wt, data = mtcars)
+
+# Exibir o resumo do modelo
+summary(modelo)
+
+# Visualizar reta de regressão
+
+ggplot(mtcars, aes(x = wt, y = mpg)) +
+  geom_point() +  # Gráfico de dispersão
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +  # Adiciona a reta de regressão
+  labs(title = "Relação entre Peso e Consumo de Combustível",
+       x = "Peso do Carro (1000 lbs)",
+       y = "Consumo (mpg)") +
+  theme_minimal()
+```
+### Interpretação dos coeficientes
+
+O intercepto $\beta_0$ representa o valor previsto de \(Y\) quando a variável $X$ é igual a 0. Em alguns casos, pode não ser interpretável diretamente se o valor $X = 0$ não fizer sentido no contexto dos dados.
+
+O coeficiente angular $\beta_1$ representa a **taxa de variação** da variável $Y$ para cada unidade adicional de $X$. Em outras palavras, indica quanto $Y$ aumenta (ou diminui) para cada aumento de uma unidade em $X$.
+
+**Exemplo:** Se $\beta_1 = -5$ em um modelo que relaciona o peso do carro com o consumo de combustível, isso significa que, para cada aumento de 1 unidade no peso do carro (1.000 lbs), espera-se que o consumo de combustível diminua, em média, 5 milhas por galão.
+
+
+## Previsão em Modelo de Regressão 
+
+A previsão em um modelo de regressão linear simples envolve o uso da equação ajustada para prever o valor da variável dependente $Y$ com base em novos valores da variável independente $X$. A equação de um modelo de regressão simples pode ser expressa como:
+
+\begin{equation}
+\hat{Y} = \beta_0 + \beta_1 X
+\end{equation}
+
+Onde:
+
+ - $\hat{Y}$ é o valor previsto de $Y$ (a variável resposta),
+ - $\beta_0$ é o intercepto (valor previsto de $Y$ quando $X = 0$,
+ - $\beta_1$ é o coeficiente angular, indicando a variação esperada em $Y$ para cada unidade de aumento em $X$,
+ - $X$ é a variável independente (preditor).
+
+### Exemplo de Previsão em R
+
+Após ajustar o modelo de regressão, é possível usar a função `predict()` para realizar previsões:
+
+```{r}
+# Ajustar o modelo de regressão linear
+
+# Fazer previsões para novos dados
+novos_dados <- data.frame(wt = c(2.5, 3.0, 4.0))
+previsoes <- predict(modelo, newdata = novos_dados)
+
+previsoes
+
+```
+
+## Análise dos Resíduos e Métricas de Diagnóstico
+
+A análise dos resíduos é uma etapa crucial para avaliar a qualidade do ajuste do modelo de regressão. Os resíduos representam a diferença entre os valores observados e os valores ajustados (\(\hat{Y}\)):
+
+\begin{equation}
+\text{Resíduo} = Y_i - \hat{Y}_i
+\end{equation}
+
+Essa análise nos ajuda a verificar se o modelo de regressão está capturando adequadamente a relação entre as variáveis e se as premissas do modelo são atendidas.
+
+### Hipóteses sobre os Resíduos
+
+1. **Independência**: Os resíduos devem ser independentes entre si. Não deve haver padrão ou correlação entre os resíduos ao longo do tempo ou de uma variável.
+   
+2. **Média zero**: A média dos resíduos deve ser próxima de zero. Caso contrário, isso pode indicar que o modelo está mal ajustado.
+
+3. **Homocedasticidade (variância constante)**: Os resíduos devem apresentar variância constante ao longo dos valores previstos. Isso significa que a dispersão dos resíduos não deve aumentar ou diminuir sistematicamente à medida que os valores previstos $\hat{Y}$ mudam.
+
+
+4. **Distribuição normal**: Os resíduos devem seguir uma distribuição normal com média zero e variância constante. Esta premissa é importante principalmente para inferências estatísticas (p-valores, intervalos de confiança).
+
+### Verificando as Premissas
+
+#### Gráfico dos Resíduos vs Valores Ajustados
+
+Um gráfico dos resíduos em função dos valores ajustados $\hat{Y}$ é útil para verificar a homocedasticidade e a média zero dos resíduos. Se as premissas forem atendidas, os resíduos devem se distribuir aleatoriamente ao redor da linha zero.
+
+```{r, echo=FALSE}
+# Gerando gráfico de resíduos vs valores ajustados
+modelo <- lm(mpg ~ wt, data = mtcars)
+residuos <- residuals(modelo)
+valores_ajustados <- fitted(modelo)
+
+ggplot(data = data.frame(residuos, valores_ajustados), aes(x = valores_ajustados, y = residuos)) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(title = "Resíduos vs Valores Ajustados",
+       x = "Valores Ajustados",
+       y = "Resíduos")
+```
+
+Um histograma dos resíduos pode ser utilizado para verificar a hipótese de normalidade. 
+
+```{r}
+ggplot(data = data.frame(residuos), aes(x = residuos)) +
+  geom_histogram(binwidth = 1, fill = "blue", color = "black", alpha = 0.7) +
+  labs(title = "Histograma dos Resíduos",
+       x = "Resíduos",
+       y = "Frequência")
+```
+
+O gráfico QQ-Plot compara a distribuição dos resíduos com uma distribuição normal teórica. Se os resíduos estiverem normalmente distribuídos, os pontos se alinharão próximos a uma linha reta.
+
+```{r}
+qqnorm(residuos)
+qqline(residuos, col = "red")
+```
+
+Além de gráficos como o histograma e o QQ-Plot, também podemos utilizar testes estatísticos para verificar a normalidade dos resíduos. Dois testes amplamente utilizados são o **Teste de Jarque-Bera** e o **Teste de Shapiro-Wilk**.
+
+#### Teste de Jarque-Bera
+
+O teste de Jarque-Bera verifica se os resíduos têm curtose e assimetria compatíveis com uma distribuição normal. A hipótese nula do teste é que os resíduos seguem uma distribuição normal. Se o p-valor for menor que o nível de significância escolhido (geralmente $\alpha = 0.05 $, rejeitamos a hipótese nula, indicando que os resíduos não são normalmente distribuídos.
+
+```{r}
+library(tseries)
+
+jarque.bera.test(residuos)
+```
+
+#### Teste de Shapiro-Wilk
+
+O teste de Shapiro-Wilk também verifica a normalidade dos resíduos. A hipótese nula é que os dados são normalmente distribuídos. Um p-valor pequeno indica que os resíduos não seguem uma distribuição normal.
+
+```{r}
+shapiro.test(residuos)
+```
+
+### Métricas de Diagnóstico
+
+Além dos gráficos, também podemos usar métricas quantitativas para avaliar o desempenho do modelo:
+
+#### R² (R-quadrado)
+
+Mede a proporção da variabilidade em $Y$ que é explicada pela variabilidade em $X$. O valor de $R^2$ varia entre 0 e 1. Um $R^2$ mais próximo de 1 indica que o modelo explica bem a variabilidade dos dados.
+
+```{r}
+summary(modelo)$r.squared
+```
+
+
+#### RSE (Erro Padrão Residual): 
+
+Mede o desvio padrão dos resíduos. Um RSE menor indica um melhor ajuste do modelo.
+
+```{r}
+summary(modelo)$sigma
+```
+
+
+#### p-valores:
+
+Testam a significância estatística dos coeficientes. Se os p-valores forem menores que um nível de significância (𝛼= 0.05), rejeitamos a hipótese nula de que os coeficientes são zero, indicando que existe uma relação significativa entre𝑋e𝑌.
+
+```{r}
+summary(modelo)$coefficients
+```
+
+#### AIC/BIC 
+
+Avaliam a qualidade do modelo ajustado penalizando o número de parâmetros. Modelos com menor AIC ou BIC são preferíveis.
+
+```{r}
+AIC(modelo)
+BIC(modelo)
+```
+
+### Nota sobre o R²
+
+
+O $R^2$ é amplamente utilizado como medida de diagnóstico em modelos lineares, mas sua interpretação pode ser enganosa em diversas situações. Modelos corretos podem apresentar $R^2$ baixo, enquanto modelos inadequados podem exibir $R^2$ elevado. Além disso, o $R^2$ tende a aumentar sempre que novos preditores são adicionados ao modelo, independentemente de sua relevância. Uma alternativa mais robusta é o $R^2$ ajustado, que só aumenta quando a nova variável realmente contribui para melhorar o poder explicativo do modelo
+
+## Regressão Múltipla
+
+A regressão múltipla é uma extensão da regressão linear simples que permite modelar a relação entre uma variável dependente $Y$ e várias variáveis independentes $X_1, X_2, ..., X_n$. Em vez de ter apenas uma variável explicativa, o modelo de regressão múltipla considera múltiplos fatores simultaneamente, oferecendo uma visão mais detalhada sobre os dados e a relação entre as variáveis.
+
+A forma geral do modelo de regressão múltipla é:
+
+\begin{equation}
+Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + ... + \beta_n X_n + \varepsilon
+\end{equation}
+
+Onde:
+
+ - $Y$ é a variável dependente (resposta);
+ - $X_1, X_2, ..., X_n$ são as variáveis independentes (explicativas);
+ - $\beta_0$ é o intercepto, ou seja, o valor esperado de $Y$ quando todas as variáveis $X_i$ são iguais a zero;
+ - $\beta_1, \beta_2, ..., \beta_n$ são os coeficientes de regressão associados a cada $X_i$, representando a mudança esperada em $Y$ para uma variação unitária em $X_i$, mantendo as demais variáveis constantes;
+ - $\varepsilon$ é o termo de erro aleatório, representando a variabilidade em $Y$ não explicada pelas variáveis $X_i$.
+
+#### Interpretação dos Coeficientes na Regressão Múltipla
+
+Cada coeficiente $\beta_i$ em uma regressão múltipla tem uma interpretação similar à regressão linear simples, mas com uma diferença fundamental: ele captura o impacto marginal de $X_i$ sobre $Y$, **mantendo as demais variáveis independentes constantes**. Isso significa que os coeficientes de um modelo de regressão múltipla controlam o efeito de outras variáveis explicativas, permitindo uma análise mais precisa dos efeitos individuais.
+
+**Atenção:** A relação entre as variáveis explicativas e a variável resposta, ainda que estatisticamente significativas, **não implicam em causalidade**. No entanto, o modelo de regressão simples pode ter interpretação causal contanto que certas hipóteses sejam atendidas (ver back-door criterion).
+
+#### Exemplo:
+
+Suponha que estamos tentando prever o preço de uma casa $Y $ com base em várias características, como tamanho da casa em metros quadrados $X_1$, número de quartos $X_2$ e idade da casa $X_3$. O modelo de regressão múltipla poderia ser escrito da seguinte forma:
+
+\begin{equation}
+Preço = \beta_0 + \beta_1 (Tamanho) + \beta_2 (Quartos) + \beta_3 (Idade) + \varepsilon
+\end{equation}
+
+## Exemplo em R
+
+Vamos retomar o banco de dados 'mtcars' e testar duas especificações de modelos: 
+
+ - **Modelo 1:** Vamos prever o consumo de combustível (mpg) usando o peso (wt), potência (hp), número de cilindros (cyl) e tempo de aceleração de 1/4 de milha (qsec).
+
+ - **Modelo 2:** Vamos prever o consumo de combustível (mpg) usando o peso (wt), potência (hp), número de cilindros (cyl) e o eixo traseiro (drat).
+
+```{r}
+modelo1 <- lm(mpg ~ wt + hp + cyl + qsec, 
+              data = mtcars)
+modelo2 <- lm(mpg ~ wt + hp + cyl + drat, 
+              data = mtcars)
+```
+
+### Resultados 
+
+#### Modelo 1
+
+```{r}
+summary(modelo1)
+```
+
+Apenas o intercepto e a variável 'wt' são estatisticamente signficativas. Vamos olhar os resíduos para avaliar a qualidade do ajuste. 
+
+```{r}
+diagnostico_residuos <- function(modelo) {
+  
+  # Resíduos e ajustes
+  residuos <- residuals(modelo)
+  ajustes <- fitted(modelo)
+  
+  # Gráfico de resíduos vs ajustes
+  plot_residuos <- ggplot(data.frame(ajustes, residuos), aes(x = ajustes, y = residuos)) +
+    geom_point() +
+    geom_hline(yintercept = 0, color = "red") +
+    labs(title = "Resíduos vs Ajustes", x = "Ajustes", y = "Resíduos")
+  
+  # Histograma dos resíduos
+  hist_residuos <- ggplot(data.frame(residuos), aes(x = residuos)) +
+    geom_histogram(binwidth = 0.5, fill = "blue", color = "black") +
+    labs(title = "Histograma dos Resíduos", x = "Resíduos", y = "Frequência")
+  
+  # QQ-plot dos resíduos
+  qqplot_residuos <- ggqqplot(residuos, title = "QQ-plot dos Resíduos", color = "blue")
+  
+  # Teste de normalidade dos resíduos - Shapiro-Wilk
+  shapiro_test <- shapiro.test(residuos)
+  
+  # Teste de normalidade dos resíduos - Jarque-Bera
+  jarque_bera_test <- jarque.bera.test(residuos)
+  
+  # Retornar os gráficos e os testes como uma lista
+  return(list(
+    plot_residuos = plot_residuos,
+    hist_residuos = hist_residuos,
+    qqplot_residuos = qqplot_residuos,
+    shapiro_test = shapiro_test,
+    jarque_bera_test = jarque_bera_test
+  ))
+}
+
+# Diagnóstico para Modelo 1
+diagnostico_residuos(modelo1)
+
+```
+
+A um nível de significância de 5% **não rejeitamos** a hipótese nula de que os resíduos do modelo de regressão são normalmente distribuídos.
+
+#### Modelo 2
+
+```{r}
+summary(modelo2)
+```
+Novamente, apenas o intercepto e a variável 'wt' são estatisticamente significativas. O $R^2$ e $R^2$ ajustado de ambos os modelos são muito semelhantes. Para avaliar a qualidade do ajuste vamos examinar os resíduos do modelo 2. 
+
+```{r}
+diagnostico_residuos(modelo2)
+```
+
+Dessa vez, o resultado do teste de Shapiro sugere que os resíduos não são normais. Uma maneira de comparar os dois modelos diretamente é através do AIC e BIC.
+
+```{r}
+metricas_diagnostico <- c(AIC(modelo1), BIC(modelo1), 
+                          AIC(modelo2), BIC(modelo2))
+names(metricas_diagnostico) <- c("AIC model1", "BIC model1", "AIC model2", "BIC model2")
+
+metricas_diagnostico
+```
+Pelas métricas de diagnóstico, o modelo 2 é levemente superior ao modelo 1. 
+
+### Multicolinearidade
+
+Para finalizar a análise vamos utilizar a função VIF do pacote 'car' para testar se há multicolinearidade entre as variáveis. 
+
+```{r}
+vif(modelo1)
+vif(modelo2)
+```
+Em ambos os modelos a variável 'cyl' aparece com um valor de VIF acima de 5, o que indica a possibilidade de que esse preditor é altamente correlacionado com outras variáveis do modelo.
+
