@@ -25,7 +25,7 @@ summary(modelo)
 
 ggplot(mtcars, aes(x = wt, y = mpg)) +
   geom_point() +  # Gráfico de dispersão
-  geom_smooth(method = "lm", se = FALSE, color = "blue") +  # Adiciona a reta de regressão
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +  
   labs(title = "Relação entre Peso e Consumo de Combustível",
        x = "Peso do Carro (1000 lbs)",
        y = "Consumo (mpg)") +
@@ -93,7 +93,8 @@ diagnostico_residuos <- function(modelo) {
   ajustes <- fitted(modelo)
   
   # Gráfico de resíduos vs ajustes
-  plot_residuos <- ggplot(data.frame(ajustes, residuos), aes(x = ajustes, y = residuos)) +
+  plot_residuos <- ggplot(data.frame(ajustes, residuos), 
+                          aes(x = ajustes, y = residuos)) +
     geom_point() +
     geom_hline(yintercept = 0, color = "red") +
     labs(title = "Resíduos vs Ajustes", x = "Ajustes", y = "Resíduos")

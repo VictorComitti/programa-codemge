@@ -17,17 +17,17 @@ iris_original <- iris
 
 # Gerando observações NA aleatoriamente na variável Sepal.Length
 
-
 iris$Sepal.Length[sample(1:nrow(iris), 0.15 * nrow(iris))] <- NA
-# iris <- iris %>% 
-#   mutate(Sepal.Length = ifelse(row_number() %in% sample(1:nrow(.), 
-#                                                         0.15 * nrow(.)), 
+# iris <- iris %>%
+#   mutate(Sepal.Length = ifelse(row_number() %in% sample(1:nrow(.),
+#                                                         0.15 * nrow(.)),
 #                                NA, Sepal.Length))
 
 # Separar as observações com NA para comparação posterior
 na_indices <- which(is.na(iris$Sepal.Length))
 
 # Função para calcular o RMSE entre os valores reais e imputados
+
 rmse <- function(true_values, imputed_values) {
   sqrt(mean((true_values - imputed_values)^2))
 }
